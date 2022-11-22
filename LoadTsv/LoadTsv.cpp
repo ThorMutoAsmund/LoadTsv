@@ -23,6 +23,9 @@ int save(const char* outputFile, map<cube, string>& map)
         return 1;
     }
 
+    int fileSize = map.size();
+    outputStream.write((char*)&fileSize, sizeof(fileSize));
+
     auto iter = map.begin();
     while (iter != map.end())
     {
@@ -39,8 +42,36 @@ int save(const char* outputFile, map<cube, string>& map)
     }
     outputStream.close();
 }
-//
-//void load(map<cube, char*>& map) {
+
+int load(const char* inputFile, map<cube, string>& map)
+{
+    ifstream inputStream(inputFile, ios::in | ios::binary);
+    if (!inputStream) {
+        cout << "Cannot open input file!" << endl;
+        return 1;
+    }
+
+    int fileSize;
+    inputStream.read((char*)&fileSize, sizeof(fileSize));
+
+    while (fileSize--)
+    {
+        int entrySize;
+        inputStream.read((char*)&entrySize, sizeof(entrySize));
+
+        cube cube;
+        char buf[256];
+        inputStream.read((char*)&cube, sizeof(cube));
+        entrySize -= sizeof(cube);
+        inputStream.read(buf, entrySize);
+        string turns(buf, entrySize);
+        
+        map.insert({ cube, turns });
+    }
+
+    inputStream.close();
+}
+    
 //    FILE* f = fopen("cppFromDRPrune.bin", "rb");
 //    if (f == NULL) {
 //        cout << "error reading file" << endl;
@@ -107,6 +138,7 @@ int convertTextToBin(const char* inputFile, const char* outputFile)
         outputStream.write(turns.c_str(), turns.length());
     }
 
+    inputStream.close();
     outputStream.close();
 }
 
@@ -114,12 +146,30 @@ int main()
 {
     //convertTextToBin("altFromDRPrune.tsv", "altFromDRPrune.bin");
 
-    map<cube, string> map;
-    //map.insert({ make_pair(247132686368ull, 407901468851537952ull), "" });
-    //map.insert({ make_pair(242833528868ull, 398894268556617760ull), "R2" });
-    map.insert({ make_pair(179455494176ull, 336936789371619360ull), "U" });
+    map<cube, string> map1;
+    map1.insert({ make_pair(247132686368ull, 407901468851537952ull), "" });
+    map1.insert({ make_pair(242833528868ull, 398894268556617760ull), "R2" });
+    map1.insert({ make_pair(179455494176ull, 336936789371619360ull), "U" });
          
-    save("cppFromDRPrune.bin", map);
+    save("cppFromDRPrune.bin", map1);
+
+    map<cube, string> map2;
+    load("cppFromDRPrune.bin", map2);
+
+
+    auto iter1 = map1.begin();
+    while (iter1 != map1.end())
+    {
+        cout << iter1->first.first << ' ' << iter1->first.second << '\t' << iter1->second << endl;
+        ++iter1;
+    }
+    cout << endl;
+    auto iter2 = map2.begin();
+    while (iter2 != map2.end())
+    {
+        cout << iter2->first.first << ' ' << iter2->first.second << '\t' << iter2->second << endl;
+        ++iter2;
+    }
 }
 
 //int main2()
