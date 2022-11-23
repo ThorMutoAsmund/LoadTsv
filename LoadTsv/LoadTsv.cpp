@@ -23,6 +23,7 @@ int save(const char* outputFile, map<cube, string>& map)
         return 1;
     }
 
+    // Write number of entries
     int fileSize = map.size();
     outputStream.write((char*)&fileSize, sizeof(fileSize));
 
@@ -33,7 +34,7 @@ int save(const char* outputFile, map<cube, string>& map)
         int entrySize = sizeof(iter->first) + iter->second.length();
         outputStream.write((char*)&entrySize, sizeof(entrySize));
 
-        // Write integers
+        // Write cube
         outputStream.write((char*)&(iter->first), sizeof(iter->first));
 
         // Write text
@@ -51,17 +52,23 @@ int load(const char* inputFile, map<cube, string>& map)
         return 1;
     }
 
+    // Read number of entries
     int fileSize;
     inputStream.read((char*)&fileSize, sizeof(fileSize));
 
+    cube cube;
+    char buf[256];
+
     while (fileSize--)
     {
+        // Read entry length
         int entrySize;
         inputStream.read((char*)&entrySize, sizeof(entrySize));
 
-        cube cube;
-        char buf[256];
+        // Read cube
         inputStream.read((char*)&cube, sizeof(cube));
+
+        // Read text
         entrySize -= sizeof(cube);
         inputStream.read(buf, entrySize);
         string turns(buf, entrySize);
@@ -113,7 +120,11 @@ int convertTextToBin(const char* inputFile, const char* outputFile)
 
     string myText;
 
-    while (getline(inputStream, myText)) 
+    // Write number of entries
+    int fileSize = 0;
+    outputStream.write((char*)&fileSize, sizeof(fileSize));
+
+    while (getline(inputStream, myText))
     {
         // read file, line by line and parse it
         std::string cubeInts = myText.substr(0, myText.find('\t'));
@@ -136,7 +147,12 @@ int convertTextToBin(const char* inputFile, const char* outputFile)
 
         // Write string
         outputStream.write(turns.c_str(), turns.length());
+
+        ++fileSize;
     }
+
+    outputStream.seekp(0);
+    outputStream.write((char*)&fileSize, sizeof(fileSize));
 
     inputStream.close();
     outputStream.close();
@@ -144,32 +160,42 @@ int convertTextToBin(const char* inputFile, const char* outputFile)
 
 int main()
 {
+    // Read converted file
+    map<cube, string> map1;
+    load("altFromDRPrune.bin", map1);
+    cout << "Size: " << map1.size() << endl;
+
+    // Conversion
     //convertTextToBin("altFromDRPrune.tsv", "altFromDRPrune.bin");
 
-    map<cube, string> map1;
-    map1.insert({ make_pair(247132686368ull, 407901468851537952ull), "" });
-    map1.insert({ make_pair(242833528868ull, 398894268556617760ull), "R2" });
-    map1.insert({ make_pair(179455494176ull, 336936789371619360ull), "U" });
-         
-    save("cppFromDRPrune.bin", map1);
 
-    map<cube, string> map2;
-    load("cppFromDRPrune.bin", map2);
+    // Demo
+    //map<cube, string> map1;
+    //map1.insert({ make_pair(247132686368ull, 407901468851537952ull), "" });
+    //map1.insert({ make_pair(242833528868ull, 398894268556617760ull), "R2" });
+    //map1.insert({ make_pair(179455494176ull, 336936789371619360ull), "U" });
+    //     
+    //save("cppFromDRPrune.bin", map1);
+
+    //map<cube, string> map2;
+    //load("cppFromDRPrune.bin", map2);
 
 
-    auto iter1 = map1.begin();
-    while (iter1 != map1.end())
-    {
-        cout << iter1->first.first << ' ' << iter1->first.second << '\t' << iter1->second << endl;
-        ++iter1;
-    }
-    cout << endl;
-    auto iter2 = map2.begin();
-    while (iter2 != map2.end())
-    {
-        cout << iter2->first.first << ' ' << iter2->first.second << '\t' << iter2->second << endl;
-        ++iter2;
-    }
+    //auto iter1 = map1.begin();
+    //while (iter1 != map1.end())
+    //{
+    //    cout << iter1->first.first << ' ' << iter1->first.second << '\t' << iter1->second << endl;
+    //    ++iter1;
+    //}
+    //cout << endl;
+    //auto iter2 = map2.begin();
+    //while (iter2 != map2.end())
+    //{
+    //    cout << iter2->first.first << ' ' << iter2->first.second << '\t' << iter2->second << endl;
+    //    ++iter2;
+    //}
+
+    return 0;
 }
 
 //int main2()
