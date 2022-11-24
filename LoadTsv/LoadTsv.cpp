@@ -6,106 +6,158 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <vector>
 #include <cstring>
+#include <chrono>
 
 using namespace std;
+using namespace std::chrono;
+
 typedef long long int lli;
 typedef unsigned long long int llu;
 
 typedef pair<llu, llu> cube;
 
-int save(const char* outputFile, map<cube, string>& map)
-{
-    ofstream outputStream(outputFile, ios::out | ios::binary);
+map<string, unsigned char> convertStringToInt = { {"U2",18},{"U",1},{"U'",2},
+{"R",3},{"R'",4},{"R2",5},
+{"L",6},{"L'",7},{"L2",8},
+{"D2",9},{"D",10},{"D'",11},
+{"F2",12},{"B2",13},
+{"F",14},{"F'",15},{"B",16},{"B'",17} };
 
-    if (!outputStream) {
-        cout << "Cannot open output file!" << endl;
-        return 1;
-    }
+map<int, string> convertIntToString = { {18,"U2"},{1,"U"},{2,"U'"},
+{3,"R"},{4,"R'"},{5,"R2"},
+{6,"L"},{7,"L'"},{8,"L2"},
+{9,"D2"},{10,"D"},{11,"D'"},
+{12,"F2"},{13,"B2"},
+{14,"F"},{15,"F'"},{16,"B"},{17,"B'"} };
 
-    // Write number of entries
-    int fileSize = map.size();
-    outputStream.write((char*)&fileSize, sizeof(fileSize));
-
-    auto iter = map.begin();
-    while (iter != map.end())
-    {
-        // Write entry length
-        int entrySize = sizeof(iter->first) + iter->second.length();
-        outputStream.write((char*)&entrySize, sizeof(entrySize));
-
-        // Write cube
-        outputStream.write((char*)&(iter->first), sizeof(iter->first));
-
-        // Write text
-        outputStream.write(iter->second.c_str(), iter->second.length());
-        ++iter;
-    }
-    outputStream.close();
-}
-
-int load(const char* inputFile, map<cube, string>& map)
-{
-    ifstream inputStream(inputFile, ios::in | ios::binary);
-    if (!inputStream) {
-        cout << "Cannot open input file!" << endl;
-        return 1;
-    }
-
-    // Read number of entries
-    int fileSize;
-    inputStream.read((char*)&fileSize, sizeof(fileSize));
-
-    cube cube;
-    char buf[256];
-
-    while (fileSize--)
-    {
-        // Read entry length
-        int entrySize;
-        inputStream.read((char*)&entrySize, sizeof(entrySize));
-
-        // Read cube
-        inputStream.read((char*)&cube, sizeof(cube));
-
-        // Read text
-        entrySize -= sizeof(cube);
-        inputStream.read(buf, entrySize);
-        string turns(buf, entrySize);
-        
-        map.insert({ cube, turns });
-    }
-
-    inputStream.close();
-}
-    
-//    FILE* f = fopen("cppFromDRPrune.bin", "rb");
-//    if (f == NULL) {
-//        cout << "error reading file" << endl;
-//    }
-//    cube key;
+//int saveOld(const char* outputFile, map<cube, string>& map)
+//{
+//    ofstream outputStream(outputFile, ios::out | ios::binary);
 //
-//    while (!feof(f)) {
-//        size_t elements_read1 = fread(&key, sizeof(key), 1, f);
-//        if (elements_read1 == 0) {
-//            cout << "error" << endl;
-//        }
-//        map[key] = new char[27];
-//        size_t elements_read2 = fread(&map[key], sizeof(char) * 27, 1, f);
-//        if (elements_read2 == 0) {
-//            cout << "error" << endl;
-//        }
-//        cout << key.first << endl;
-//        cout << key.second << endl;
-//        // cout << sizeof(val) << endl;
-//        cout << map[key] << endl;
-//        // map[key] = val;
+//    if (!outputStream) {
+//        cout << "Cannot open output file!" << endl;
+//        return 1;
 //    }
-//    fclose(f);
+//
+//    // Write number of entries
+//    int fileSize = map.size();
+//    outputStream.write((char*)&fileSize, sizeof(fileSize));
+//
+//    auto iter = map.begin();
+//    while (iter != map.end())
+//    {
+//        // Write entry length
+//        int entrySize = sizeof(iter->first) + iter->second.length();
+//        outputStream.write((char*)&entrySize, sizeof(entrySize));
+//
+//        // Write cube
+//        outputStream.write((char*)&(iter->first), sizeof(iter->first));
+//
+//        // Write text
+//        outputStream.write(iter->second.c_str(), iter->second.length());
+//        ++iter;
+//    }
+//    outputStream.close();
 //}
+//
+//int loadOld(const char* inputFile, map<cube, string>& map)
+//{
+//    ifstream inputStream(inputFile, ios::in | ios::binary);
+//    if (!inputStream) {
+//        cout << "Cannot open input file!" << endl;
+//        return 1;
+//    }
+//
+//    // Read number of entries
+//    int fileSize;
+//    inputStream.read((char*)&fileSize, sizeof(fileSize));
+//
+//    cube cube;
+//    char buf[256];
+//
+//    while (fileSize--)
+//    {
+//        // Read entry length
+//        int entrySize;
+//        inputStream.read((char*)&entrySize, sizeof(entrySize));
+//
+//        // Read cube
+//        inputStream.read((char*)&cube, sizeof(cube));
+//
+//        // Read text
+//        entrySize -= sizeof(cube);
+//        inputStream.read(buf, entrySize);
+//        string turns(buf, entrySize);
+//        
+//        map.insert({ cube, turns });
+//    }
+//
+//    inputStream.close();
+//}
+    
+
+//int convertTextToBinOld(const char* inputFile, const char* outputFile)
+//{
+//    ifstream inputStream(inputFile);
+//    if (!inputStream) {
+//        cout << "Cannot open input file!" << endl;
+//        return 1;
+//    }
+//
+//    ofstream outputStream(outputFile, ios::out | ios::binary);
+//    if (!outputStream) {
+//        cout << "Cannot open output file!" << endl;
+//        return 1;
+//    }
+//
+//    string myText;
+//
+//    // Write number of entries
+//    int fileSize = 0;
+//    outputStream.write((char*)&fileSize, sizeof(fileSize));
+//
+//    while (getline(inputStream, myText))
+//    {
+//        // read file, line by line and parse it
+//        std::string cubeInts = myText.substr(0, myText.find('\t'));
+//        std::string int1Str = cubeInts.substr(0, myText.find(' '));
+//        std::string int2Str = cubeInts.substr(int1Str.length() + 1, cubeInts.length() - int1Str.length() - 1);
+//        std::string turns = myText.substr(cubeInts.length() + 1, myText.length() - cubeInts.length() - 1);
+//
+//        // Write entry length
+//        llu tempInt;
+//        int entrySize = 2 * sizeof(tempInt) + turns.length();
+//        outputStream.write((char*)&entrySize, sizeof(entrySize));
+//
+//        // Write first integer
+//        tempInt = std::stoull(int1Str);
+//        outputStream.write((char*)&tempInt, sizeof(tempInt));
+//
+//        // Write second integer
+//        tempInt = std::stoull(int2Str);
+//        outputStream.write((char*)&tempInt, sizeof(tempInt));
+//
+//        // Write string
+//        outputStream.write(turns.c_str(), turns.length());
+//
+//        ++fileSize;
+//    }
+//
+//    outputStream.seekp(0);
+//    outputStream.write((char*)&fileSize, sizeof(fileSize));
+//
+//    inputStream.close();
+//    outputStream.close();
+//}
+
 
 int convertTextToBin(const char* inputFile, const char* outputFile)
 {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
     ifstream inputStream(inputFile);
     if (!inputStream) {
         cout << "Cannot open input file!" << endl;
@@ -132,21 +184,38 @@ int convertTextToBin(const char* inputFile, const char* outputFile)
         std::string int2Str = cubeInts.substr(int1Str.length() + 1, cubeInts.length() - int1Str.length() - 1);
         std::string turns = myText.substr(cubeInts.length() + 1, myText.length() - cubeInts.length() - 1);
 
-        // Write entry length
+        // Convert string to array of ints
+        int startS = 0;
+        unsigned char moves[10];
+        unsigned char lenMoves = 0;
+        memset(moves, 0, sizeof(moves));
+        for (int i = 0;i < turns.size();i++) {
+            if (turns[i] == ' ') {
+
+                string ttemp = turns.substr(startS, (i)-startS);
+                startS = i + 1;
+                moves[lenMoves] = convertStringToInt[ttemp];
+                lenMoves++;
+            }
+        }
+        string ttemp = turns.substr(startS, turns.size() - startS); // last move
+        moves[lenMoves++] = convertStringToInt[ttemp];
+
         llu tempInt;
-        int entrySize = 2 * sizeof(tempInt) + turns.length();
-        outputStream.write((char*)&entrySize, sizeof(entrySize));
 
         // Write first integer
         tempInt = std::stoull(int1Str);
-        outputStream.write((char*)&tempInt, sizeof(tempInt));
-        
-        // Write second integer
-        tempInt = std::stoull(int2Str);        
-        outputStream.write((char*)&tempInt, sizeof(tempInt));
+        outputStream.write((const char*)&tempInt, sizeof(tempInt));
 
-        // Write string
-        outputStream.write(turns.c_str(), turns.length());
+        // Write second integer
+        tempInt = std::stoull(int2Str);
+        outputStream.write((const char*)&tempInt, sizeof(tempInt));
+
+        // Write number of moves
+        outputStream.write((const char*)&lenMoves, sizeof(unsigned char));
+
+        // Write moves
+        outputStream.write((const char*)moves, lenMoves * sizeof(unsigned char));
 
         ++fileSize;
     }
@@ -156,14 +225,73 @@ int convertTextToBin(const char* inputFile, const char* outputFile)
 
     inputStream.close();
     outputStream.close();
+    return 0;
 }
+
+int load(const char* inputFile, map<cube, vector<unsigned char>>& map)
+{
+    ifstream inputStream(inputFile, ios::in | ios::binary);
+    if (!inputStream) {
+        cout << "Cannot open input file!" << endl;
+        return 1;
+    }
+
+    // Read number of entries
+    int fileSize;
+    inputStream.read((char*)&fileSize, sizeof(fileSize));
+
+    cube cube;
+    // int buf[10];
+    unsigned char moves[10];
+
+    while (fileSize--)
+    {
+        // Read cube
+        inputStream.read((char *)&cube, sizeof(cube));
+
+        // Read number of moves
+        unsigned char lenMoves;
+        inputStream.read((char *)&lenMoves, sizeof(unsigned char));
+
+        // Read text
+        inputStream.read((char*)moves, lenMoves * sizeof(unsigned char));
+        // int turns(buf, entrySize);
+        // memset(map[cube],*turns,sizeof(turns));
+        vector<unsigned char> turns(moves, moves + lenMoves);
+
+        map.insert({ cube, turns });
+    }
+
+    inputStream.close();
+    return 0;
+}
+
 
 int main()
 {
+    // Conversion
+    //int ans = convertTextToBin("altFromDRPrune.tsv", "altFromDRPrune.bin");
+
     // Read converted file
-    map<cube, string> map1;
-    load("altFromDRPrune.bin", map1);
-    cout << "Size: " << map1.size() << endl;
+    auto start = high_resolution_clock::now();
+
+    map<cube, vector<unsigned char>> map1;
+    int ans = load("altFromDRPrune.bin", map1);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
+    cout << "Size: " << map1.size() << " read in " << duration.count() << "ms" << endl;
+    //cube ccube = make_pair(247132686368ull, 407901468851537952ull);
+    //int* moves = map1[ccube];
+    //for (int i = 0;i < sizeof(moves) / sizeof(int);i++) {
+    //    cout << moves[i] << " ";
+    //}
+    //cout << endl;
+
+
+    // Read converted file
+    //map<cube, string> map1;
+    //load("altFromDRPrune.bin", map1);
+    //cout << "Size: " << map1.size() << endl;
 
     // Conversion
     //convertTextToBin("altFromDRPrune.tsv", "altFromDRPrune.bin");
